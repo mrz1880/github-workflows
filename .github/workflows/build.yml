@@ -1,0 +1,30 @@
+name: Reusable Build Workflow
+
+on:
+  workflow_call:  # Permet à d'autres repos d'appeler ce workflow
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Extract Node version from Volta config
+        id: node_version
+        run: |
+          VERSION=$(grep '"node":' package.json | sed -E 's/.*"node": *"([^"]+)".*/\1/')
+          echo "node_version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Use Node.js ${{ steps.node_version.outputs.node_version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.node_version.outputs.node_version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the app
+        run: npm run build
